@@ -1,98 +1,63 @@
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
 
-class TrainConsistManagementAppTest_UC15 {
+class TrainApp {
 
-    static class CargoSafetyException extends RuntimeException {
-        public CargoSafetyException(String message) {
-            super(message);
-        }
-    }
+    static class SafeSearch {
 
-    static class GoodsBogie {
-        private String shape;
-        private String cargo;
-        private boolean finallyExecuted;
-
-        public GoodsBogie(String shape) {
-            this.shape = shape;
-        }
-
-        public void assignCargo(String cargo) {
-            try {
-                if (shape.equalsIgnoreCase("Rectangular") && cargo.equalsIgnoreCase("Petroleum")) {
-                    throw new CargoSafetyException("Petroleum cannot be assigned to a Rectangular bogie");
-                }
-                this.cargo = cargo;
-            } catch (CargoSafetyException e) {
-                System.out.println("Error: " + e.getMessage());
-            } finally {
-                finallyExecuted = true;
-                System.out.println("Cargo assignment attempt completed.");
+        public boolean search(String[] bogieIds, String key) {
+            // Fail-fast validation
+            if (bogieIds == null || bogieIds.length == 0) {
+                throw new IllegalStateException("No bogies available for search");
             }
-        }
 
-        public String getShape() {
-            return shape;
-        }
-
-        public String getCargo() {
-            return cargo;
-        }
-
-        public boolean isFinallyExecuted() {
-            return finallyExecuted;
+            // Linear search after validation
+            for (String id : bogieIds) {
+                if (id.equals(key)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
     @Test
-    void testCargo_SafeAssignment() {
-        GoodsBogie bogie = new GoodsBogie("Cylindrical");
-        bogie.assignCargo("Petroleum");
+    void testSearch_ThrowsExceptionWhenEmpty() {
+        SafeSearch searcher = new SafeSearch();
 
-        assertEquals("Petroleum", bogie.getCargo());
+        String[] ids = {};
+        assertThrows(IllegalStateException.class, () -> searcher.search(ids, "BG101"));
     }
 
     @Test
-    void testCargo_UnsafeAssignmentHandled() {
-        GoodsBogie bogie = new GoodsBogie("Rectangular");
+    void testSearch_AllowsSearchWhenDataExists() {
+        SafeSearch searcher = new SafeSearch();
 
-        assertDoesNotThrow(() -> bogie.assignCargo("Petroleum"));
-        assertNull(bogie.getCargo());
+        String[] ids = {"BG101","BG205"};
+        assertDoesNotThrow(() -> searcher.search(ids, "BG101"));
     }
 
     @Test
-    void testCargo_CargoNotAssignedAfterFailure() {
-        GoodsBogie bogie = new GoodsBogie("Rectangular");
-        bogie.assignCargo("Petroleum");
+    void testSearch_BogieFoundAfterValidation() {
+        SafeSearch searcher = new SafeSearch();
 
-        assertNull(bogie.getCargo());
+        String[] ids = {"BG101","BG205","BG309"};
+        assertTrue(searcher.search(ids, "BG205"));
     }
 
     @Test
-    void testCargo_ProgramContinuesAfterException() {
-        GoodsBogie bogie1 = new GoodsBogie("Rectangular");
-        GoodsBogie bogie2 = new GoodsBogie("Cylindrical");
+    void testSearch_BogieNotFoundAfterValidation() {
+        SafeSearch searcher = new SafeSearch();
 
-        assertDoesNotThrow(() -> {
-            bogie1.assignCargo("Petroleum");
-            bogie2.assignCargo("Petroleum");
-        });
-
-        assertNull(bogie1.getCargo());
-        assertEquals("Petroleum", bogie2.getCargo());
+        String[] ids = {"BG101","BG205","BG309"};
+        assertFalse(searcher.search(ids, "BG999"));
     }
 
     @Test
-    void testCargo_FinallyBlockExecution() {
-        GoodsBogie bogie1 = new GoodsBogie("Rectangular");
-        GoodsBogie bogie2 = new GoodsBogie("Cylindrical");
+    void testSearch_SingleElementValidCase() {
+        SafeSearch searcher = new SafeSearch();
 
-        bogie1.assignCargo("Petroleum");
-        bogie2.assignCargo("Coal");
-
-        assertTrue(bogie1.isFinallyExecuted());
-        assertTrue(bogie2.isFinallyExecuted());
+        String[] ids = {"BG101"};
+        assertTrue(searcher.search(ids, "BG101"));
     }
 }
