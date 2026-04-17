@@ -1,81 +1,63 @@
 import org.junit.jupiter.api.Test;
-import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TrainApp {
 
-    static class BinarySearch {
+    static class SafeSearch {
+
         public boolean search(String[] bogieIds, String key) {
-            Arrays.sort(bogieIds);
+            // Fail-fast validation
+            if (bogieIds == null || bogieIds.length == 0) {
+                throw new IllegalStateException("No bogies available for search");
+            }
 
-            int low = 0;
-            int high = bogieIds.length - 1;
-
-            while (low <= high) {
-                int mid = (low + high) / 2;
-                int cmp = key.compareTo(bogieIds[mid]);
-
-                if (cmp == 0) return true;
-                else if (cmp < 0) high = mid - 1;
-                else low = mid + 1;
+            // Linear search after validation
+            for (String id : bogieIds) {
+                if (id.equals(key)) {
+                    return true;
+                }
             }
             return false;
         }
     }
 
     @Test
-    void testBinarySearch_BogieFound() {
-        BinarySearch searcher = new BinarySearch();
+    void testSearch_ThrowsExceptionWhenEmpty() {
+        SafeSearch searcher = new SafeSearch();
 
-        String[] ids = {"BG101","BG205","BG309","BG412","BG550"};
-        assertTrue(searcher.search(ids, "BG309"));
+        String[] ids = {};
+        assertThrows(IllegalStateException.class, () -> searcher.search(ids, "BG101"));
     }
 
     @Test
-    void testBinarySearch_BogieNotFound() {
-        BinarySearch searcher = new BinarySearch();
+    void testSearch_AllowsSearchWhenDataExists() {
+        SafeSearch searcher = new SafeSearch();
 
-        String[] ids = {"BG101","BG205","BG309","BG412","BG550"};
+        String[] ids = {"BG101","BG205"};
+        assertDoesNotThrow(() -> searcher.search(ids, "BG101"));
+    }
+
+    @Test
+    void testSearch_BogieFoundAfterValidation() {
+        SafeSearch searcher = new SafeSearch();
+
+        String[] ids = {"BG101","BG205","BG309"};
+        assertTrue(searcher.search(ids, "BG205"));
+    }
+
+    @Test
+    void testSearch_BogieNotFoundAfterValidation() {
+        SafeSearch searcher = new SafeSearch();
+
+        String[] ids = {"BG101","BG205","BG309"};
         assertFalse(searcher.search(ids, "BG999"));
     }
 
     @Test
-    void testBinarySearch_FirstElementMatch() {
-        BinarySearch searcher = new BinarySearch();
-
-        String[] ids = {"BG101","BG205","BG309"};
-        assertTrue(searcher.search(ids, "BG101"));
-    }
-
-    @Test
-    void testBinarySearch_LastElementMatch() {
-        BinarySearch searcher = new BinarySearch();
-
-        String[] ids = {"BG101","BG205","BG309"};
-        assertTrue(searcher.search(ids, "BG309"));
-    }
-
-    @Test
-    void testBinarySearch_SingleElementArray() {
-        BinarySearch searcher = new BinarySearch();
+    void testSearch_SingleElementValidCase() {
+        SafeSearch searcher = new SafeSearch();
 
         String[] ids = {"BG101"};
         assertTrue(searcher.search(ids, "BG101"));
-    }
-
-    @Test
-    void testBinarySearch_EmptyArray() {
-        BinarySearch searcher = new BinarySearch();
-
-        String[] ids = {};
-        assertFalse(searcher.search(ids, "BG101"));
-    }
-
-    @Test
-    void testBinarySearch_UnsortedInputHandled() {
-        BinarySearch searcher = new BinarySearch();
-
-        String[] ids = {"BG309","BG101","BG550","BG205","BG412"};
-        assertTrue(searcher.search(ids, "BG205"));
     }
 }
